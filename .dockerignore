@@ -1,0 +1,14 @@
+.git
+.idea
+.nova
+.phpunit.cache
+.vscode
+.zed
+node_modules
+public/build
+public/hot
+storage/logs/*.log
+vendor
+.env
+.env.*
+!.env.example

@@ -1,0 +1,32 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    volumes:
+      - .:/var/www/html
+      - composer-cache:/tmp/composer-cache
+    environment:
+      APP_URL: "http://localhost:${APP_PORT:-8000}"
+      COMPOSER_CACHE_DIR: /tmp/composer-cache
+      RUN_MIGRATIONS: "${RUN_MIGRATIONS:-true}"
+
+  vite:
+    image: node:22-bookworm
+    working_dir: /var/www/html
+    ports:
+      - "${VITE_PORT:-5173}:5173"
+    volumes:
+      - .:/var/www/html
+      - npm-cache:/root/.npm
+    environment:
+      VITE_APP_NAME: "${APP_NAME:-Laravel}"
+    command: sh docker/vite-entrypoint.sh
+    depends_on:
+      - app
+
+volumes:
+  composer-cache:
+  npm-cache:
