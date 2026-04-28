@@ -1,59 +1,307 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# AI Video Generator
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel + Inertia React application for generating AI video history, script/storyboard data, and Magic Hour video project results.
 
-## About Laravel
+## Requirements
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Recommended setup:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- Docker Desktop
+- Docker Compose
+- Make, optional but useful
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Local setup without Docker needs:
 
-## Learning Laravel
+- PHP 8.2+
+- Composer 2
+- Node.js 22+
+- MySQL 8+
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Environment
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Copy the example env file:
 
-## Laravel Sponsors
+```bash
+cp .env.example .env
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Set database values:
 
-### Premium Partners
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=video_streaming
+DB_USERNAME=root
+DB_PASSWORD=your_password
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Set Magic Hour values:
 
-## Contributing
+```env
+MAGIC_HOUR_API_KEY=your_magic_hour_api_key
+MAGIC_HOUR_API_URL=https://api.magichour.ai/v1
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Do not commit a real API key.
 
-## Code of Conduct
+## GitHub Actions Secrets
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+For GitHub Actions, keep the Magic Hour key in repository secrets instead of committing it.
 
-## Security Vulnerabilities
+Add this repository secret:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```text
+MAGIC_HOUR_API_KEY
+```
 
-## License
+Use this value for the URL in the workflow or repo variables:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```text
+MAGIC_HOUR_API_URL=https://api.magichour.ai/v1
+```
+
+How to add the secret:
+
+1. Open the GitHub repository.
+2. Go to `Settings`.
+3. Open `Secrets and variables`.
+4. Open `Actions`.
+5. Click `New repository secret`.
+6. Name it `MAGIC_HOUR_API_KEY`.
+7. Paste the Magic Hour key and save.
+
+The workflow file is in `.github/workflows/ci.yml`. It installs PHP and Node dependencies, starts MySQL, runs migrations, runs tests, and builds the frontend.
+
+## Install With Docker
+
+Start the app:
+
+```bash
+docker compose up --build
+```
+
+Open:
+
+- Laravel app: http://localhost:8000
+- Vite dev server: http://localhost:5173
+- MySQL host port: `3306`
+
+The Docker entrypoint will automatically:
+
+- create `.env` from `.env.example` if missing
+- install Composer dependencies if `vendor` is missing
+- generate `APP_KEY` if missing
+- wait for MySQL healthcheck through Compose
+- run `php artisan migrate --force`
+- start Laravel on port `8000`
+
+If local port `3306` is already used:
+
+```bash
+DB_FORWARD_PORT=3307 docker compose up --build
+```
+
+Inside Docker, the app connects to MySQL using `DB_HOST=mysql`. On your host machine, use `127.0.0.1`.
+
+## Docker Helper Commands
+
+Normal up:
+
+```bash
+make docker-up
+```
+
+Up with rebuild:
+
+```bash
+make docker-up-build
+```
+
+Up after pruning Docker build/image cache:
+
+```bash
+make docker-up-clean
+```
+
+Stop containers:
+
+```bash
+make docker-down
+```
+
+Prune Docker build/image/container/network cache:
+
+```bash
+make docker-prune
+```
+
+Reset cache volumes too:
+
+```bash
+make docker-reset-cache
+```
+
+`docker-reset-cache` removes named Docker volumes, including dependency cache and MySQL data.
+
+## Local Install Without Docker
+
+Install dependencies:
+
+```bash
+composer install
+npm install
+```
+
+Generate app key:
+
+```bash
+php artisan key:generate
+```
+
+Run migrations:
+
+```bash
+php artisan migrate
+```
+
+Start Laravel:
+
+```bash
+php artisan serve
+```
+
+Start Vite:
+
+```bash
+npm run dev
+```
+
+Open http://localhost:8000.
+
+## How To Use
+
+1. Register or login.
+2. Open `Create Video`.
+3. Fill video type, topic, keywords, target audience, tone, and duration.
+4. Keep `Submit to Magic Hour` enabled if you want a real Magic Hour video project.
+5. Click `Generate`.
+6. The app saves:
+   - user input
+   - generated script/storyboard
+   - scene records
+   - Magic Hour submit response
+   - Magic Hour project response
+   - usage logs
+   - lifecycle events
+7. Open the generation detail page.
+8. If Magic Hour status is `queued` or `processing`, the page refreshes status every 5 seconds.
+9. When Magic Hour returns `complete`, the app stores the video URL and marks the generation as `completed`.
+
+## Main Pages
+
+- `/dashboard`
+- `/generations`
+- `/generations/create`
+- `/generations/{id}`
+
+## Magic Hour Flow
+
+Submit text-to-video:
+
+```text
+POST https://api.magichour.ai/v1/text-to-video
+```
+
+Fetch project:
+
+```text
+GET https://api.magichour.ai/v1/video-projects/{id}
+```
+
+Status handling:
+
+- `queued` means loading
+- `processing` means loading
+- `complete` becomes app status `completed`
+- `failed`, `error`, or `canceled` becomes app status `failed`
+
+The video download URL from Magic Hour is temporary. The app stores:
+
+- `video_url`
+- `video_url_expires_at`
+- `downloads`
+- `download`
+
+## Database Tables
+
+Core tables:
+
+- `video_generations`
+- `video_generation_scenes`
+- `ai_usage_logs`
+- `video_generation_events`
+
+Laravel default tables are also used for users, sessions, cache, and queue jobs.
+
+## Useful Artisan Commands
+
+Run migrations:
+
+```bash
+php artisan migrate
+```
+
+Rollback last migration batch:
+
+```bash
+php artisan migrate:rollback
+```
+
+Clear config/cache:
+
+```bash
+php artisan optimize:clear
+```
+
+Run tests:
+
+```bash
+php artisan test
+```
+
+With Docker:
+
+```bash
+docker compose exec app php artisan migrate
+docker compose exec app php artisan optimize:clear
+docker compose exec app php artisan test
+```
+
+## Troubleshooting
+
+If MySQL port is already used:
+
+```bash
+DB_FORWARD_PORT=3307 docker compose up --build
+```
+
+If app cannot connect to MySQL inside Docker, check that app uses:
+
+```env
+DB_HOST=mysql
+```
+
+The Compose file already overrides this for the app container.
+
+If Vite does not reload from Docker, restart the Vite service:
+
+```bash
+docker compose restart vite
+```
+
+If Docker cache grows too large:
+
+```bash
+make docker-prune
+```
