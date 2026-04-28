@@ -1,4 +1,5 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
+import FlashMessage from '@/Components/App/FlashMessage';
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
@@ -6,7 +7,8 @@ import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
-    const user = usePage().props.auth?.user;
+    const { auth, flash } = usePage().props;
+    const user = auth?.user;
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
@@ -210,6 +212,20 @@ export default function AuthenticatedLayout({ header, children }) {
                         {header}
                     </div>
                 </header>
+            )}
+
+            {(flash?.success || flash?.error || flash?.warning) && (
+                <div className="mx-auto max-w-7xl space-y-3 px-4 pt-6 sm:px-6 lg:px-8">
+                    {flash.success && (
+                        <FlashMessage type="success">{flash.success}</FlashMessage>
+                    )}
+                    {flash.error && (
+                        <FlashMessage type="error">{flash.error}</FlashMessage>
+                    )}
+                    {flash.warning && (
+                        <FlashMessage type="warning">{flash.warning}</FlashMessage>
+                    )}
+                </div>
             )}
 
             <main>{children}</main>

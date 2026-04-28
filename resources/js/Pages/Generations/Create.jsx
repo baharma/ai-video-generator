@@ -2,93 +2,41 @@ import Card from '@/Components/App/Card';
 import FormGroup from '@/Components/App/FormGroup';
 import PageHeader from '@/Components/App/PageHeader';
 import PrimaryButton from '@/Components/App/PrimaryButton';
-import SceneCard from '@/Components/App/SceneCard';
 import SecondaryButton from '@/Components/App/SecondaryButton';
 import SelectInput from '@/Components/App/SelectInput';
 import TextArea from '@/Components/App/TextArea';
 import TextInput from '@/Components/App/TextInput';
-import VideoPreview from '@/Components/App/VideoPreview';
+import Checkbox from '@/Components/Checkbox';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, useForm } from '@inertiajs/react';
 
-const videoTypes = [
-    'Marketing Video',
-    'Educational Clip',
-    'Social Media Reel',
-    'Product Demo',
-    'Explainer Video',
-];
-
-const tones = [
-    'Formal',
-    'Casual',
-    'Persuasive',
-    'Friendly',
-    'Professional',
-    'Inspirational',
-];
-
-const durations = ['30 seconds', '60 seconds', '90 seconds'];
-
-const dummyResult = {
-    title: 'Boost Your Brand with Smart Video Content',
-    summary:
-        'A short persuasive video concept designed to attract new customers and explain the main product value.',
-    script:
-        'Are you struggling to create content that captures attention? With the right message, your brand can stand out, connect with your audience, and turn viewers into customers.',
-    scenes: [
-        {
-            scene_number: 1,
-            duration: '0-5s',
-            visual: 'A business owner looking at an empty content calendar.',
-            voice_over: 'Creating content every day can feel overwhelming.',
-            text_overlay: 'Need better content?',
-        },
-        {
-            scene_number: 2,
-            duration: '5-15s',
-            visual: 'AI-generated ideas appearing on a clean dashboard.',
-            voice_over:
-                'Our AI helps you turn simple ideas into structured video scripts.',
-            text_overlay: 'Generate scripts instantly',
-        },
-        {
-            scene_number: 3,
-            duration: '15-30s',
-            visual: 'A finished social media video preview with strong call-to-action.',
-            voice_over: 'Create clear, engaging, and persuasive videos faster.',
-            text_overlay: 'Create. Preview. Publish.',
-        },
-    ],
-    cta: 'Start creating your video script today.',
-};
-
-export default function Create() {
-    const [form, setForm] = useState({
-        video_type: 'Marketing Video',
+export default function Create({ options = {}, defaults = {} }) {
+    const initialData = {
+        video_type: defaults.video_type || 'Marketing Video',
         topic: '',
         keywords: '',
         target_audience: '',
-        tone: 'Persuasive',
-        duration: '30 seconds',
-    });
-    const [loading, setLoading] = useState(false);
-    const [result, setResult] = useState(null);
-
-    const updateField = (field, value) => {
-        setForm((current) => ({ ...current, [field]: value }));
+        tone: defaults.tone || 'Persuasive',
+        duration: defaults.duration || '30',
+        prompt: '',
+        name: '',
+        model: defaults.model || 'ltx-2',
+        resolution: defaults.resolution || '720p',
+        aspect_ratio: defaults.aspect_ratio || '16:9',
+        submit_video: defaults.submit_video ?? true,
+        audio: defaults.audio ?? false,
     };
+
+    const { data, setData, post, processing, errors, reset } = useForm(initialData);
 
     const handleGenerate = (event) => {
         event.preventDefault();
-        setLoading(true);
-        setResult(null);
+        post(route('generations.store'));
+    };
 
-        window.setTimeout(() => {
-            setResult(dummyResult);
-            setLoading(false);
-        }, 900);
+    const resetForm = () => {
+        reset();
+        setData(initialData);
     };
 
     return (
@@ -105,24 +53,24 @@ export default function Create() {
                 <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
                     <PageHeader
                         title="Create AI Video"
-                        description="Design a video script, storyboard, and scene plan from a simple idea. This screen uses local React state and dummy output only."
+                        description="Save the user input, generate a script and storyboard, then submit a text-to-video job to Magic Hour."
                     />
 
-                    <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+                    <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
                         <Card className="p-6 lg:p-8">
                             <form onSubmit={handleGenerate} className="space-y-6">
                                 <div className="grid gap-5 sm:grid-cols-2">
-                                    <FormGroup label="Video Type">
+                                    <FormGroup
+                                        label="Video Type"
+                                        error={errors.video_type}
+                                    >
                                         <SelectInput
-                                            value={form.video_type}
+                                            value={data.video_type}
                                             onChange={(event) =>
-                                                updateField(
-                                                    'video_type',
-                                                    event.target.value,
-                                                )
+                                                setData('video_type', event.target.value)
                                             }
                                         >
-                                            {videoTypes.map((videoType) => (
+                                            {(options.videoTypes || []).map((videoType) => (
                                                 <option
                                                     key={videoType}
                                                     value={videoType}
@@ -133,57 +81,57 @@ export default function Create() {
                                         </SelectInput>
                                     </FormGroup>
 
-                                    <FormGroup label="Duration">
+                                    <FormGroup
+                                        label="Duration"
+                                        error={errors.duration}
+                                    >
                                         <SelectInput
-                                            value={form.duration}
+                                            value={data.duration}
                                             onChange={(event) =>
-                                                updateField(
-                                                    'duration',
-                                                    event.target.value,
-                                                )
+                                                setData('duration', event.target.value)
                                             }
                                         >
-                                            {durations.map((duration) => (
+                                            {(options.durations || []).map((duration) => (
                                                 <option
-                                                    key={duration}
-                                                    value={duration}
+                                                    key={duration.value}
+                                                    value={duration.value}
                                                 >
-                                                    {duration}
+                                                    {duration.label}
                                                 </option>
                                             ))}
                                         </SelectInput>
                                     </FormGroup>
                                 </div>
 
-                                <FormGroup label="Topic / Idea">
+                                <FormGroup label="Topic / Idea" error={errors.topic}>
                                     <TextArea
-                                        value={form.topic}
+                                        value={data.topic}
                                         onChange={(event) =>
-                                            updateField('topic', event.target.value)
+                                            setData('topic', event.target.value)
                                         }
                                         placeholder="Example: AI marketing campaign for a small business"
                                     />
                                 </FormGroup>
 
                                 <div className="grid gap-5 sm:grid-cols-2">
-                                    <FormGroup label="Keywords">
+                                    <FormGroup label="Keywords" error={errors.keywords}>
                                         <TextInput
-                                            value={form.keywords}
+                                            value={data.keywords}
                                             onChange={(event) =>
-                                                updateField(
-                                                    'keywords',
-                                                    event.target.value,
-                                                )
+                                                setData('keywords', event.target.value)
                                             }
                                             placeholder="AI, brand, content"
                                         />
                                     </FormGroup>
 
-                                    <FormGroup label="Target Audience">
+                                    <FormGroup
+                                        label="Target Audience"
+                                        error={errors.target_audience}
+                                    >
                                         <TextInput
-                                            value={form.target_audience}
+                                            value={data.target_audience}
                                             onChange={(event) =>
-                                                updateField(
+                                                setData(
                                                     'target_audience',
                                                     event.target.value,
                                                 )
@@ -193,14 +141,14 @@ export default function Create() {
                                     </FormGroup>
                                 </div>
 
-                                <FormGroup label="Tone">
+                                <FormGroup label="Tone" error={errors.tone}>
                                     <SelectInput
-                                        value={form.tone}
+                                        value={data.tone}
                                         onChange={(event) =>
-                                            updateField('tone', event.target.value)
+                                            setData('tone', event.target.value)
                                         }
                                     >
-                                        {tones.map((tone) => (
+                                        {(options.tones || []).map((tone) => (
                                             <option key={tone} value={tone}>
                                                 {tone}
                                             </option>
@@ -208,23 +156,128 @@ export default function Create() {
                                     </SelectInput>
                                 </FormGroup>
 
+                                <FormGroup
+                                    label="Custom Magic Hour Prompt"
+                                    error={errors.prompt}
+                                >
+                                    <TextArea
+                                        rows={5}
+                                        value={data.prompt}
+                                        onChange={(event) =>
+                                            setData('prompt', event.target.value)
+                                        }
+                                        placeholder="Optional. Leave blank to build a prompt from the generated script and storyboard."
+                                    />
+                                </FormGroup>
+
+                                <div className="grid gap-5 sm:grid-cols-3">
+                                    <FormGroup label="Model" error={errors.model}>
+                                        <SelectInput
+                                            value={data.model}
+                                            onChange={(event) =>
+                                                setData('model', event.target.value)
+                                            }
+                                        >
+                                            {(options.models || []).map((model) => (
+                                                <option
+                                                    key={model.value}
+                                                    value={model.value}
+                                                >
+                                                    {model.label}
+                                                </option>
+                                            ))}
+                                        </SelectInput>
+                                    </FormGroup>
+
+                                    <FormGroup
+                                        label="Resolution"
+                                        error={errors.resolution}
+                                    >
+                                        <SelectInput
+                                            value={data.resolution}
+                                            onChange={(event) =>
+                                                setData('resolution', event.target.value)
+                                            }
+                                        >
+                                            {(options.resolutions || []).map((resolution) => (
+                                                <option
+                                                    key={resolution}
+                                                    value={resolution}
+                                                >
+                                                    {resolution}
+                                                </option>
+                                            ))}
+                                        </SelectInput>
+                                    </FormGroup>
+
+                                    <FormGroup
+                                        label="Aspect Ratio"
+                                        error={errors.aspect_ratio}
+                                    >
+                                        <SelectInput
+                                            value={data.aspect_ratio}
+                                            onChange={(event) =>
+                                                setData('aspect_ratio', event.target.value)
+                                            }
+                                        >
+                                            {(options.aspectRatios || []).map((ratio) => (
+                                                <option
+                                                    key={ratio.value}
+                                                    value={ratio.value}
+                                                >
+                                                    {ratio.label}
+                                                </option>
+                                            ))}
+                                        </SelectInput>
+                                    </FormGroup>
+                                </div>
+
+                                <FormGroup
+                                    label="Magic Hour Project Name"
+                                    error={errors.name}
+                                >
+                                    <TextInput
+                                        value={data.name}
+                                        onChange={(event) =>
+                                            setData('name', event.target.value)
+                                        }
+                                        placeholder="Optional custom project name"
+                                    />
+                                </FormGroup>
+
+                                <div className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                    <label className="flex items-start gap-3 text-sm text-slate-700">
+                                        <Checkbox
+                                            checked={data.submit_video}
+                                            onChange={(event) =>
+                                                setData(
+                                                    'submit_video',
+                                                    event.target.checked,
+                                                )
+                                            }
+                                        />
+                                        <span>
+                                            Submit to Magic Hour after saving the
+                                            script and storyboard.
+                                        </span>
+                                    </label>
+                                    <label className="flex items-start gap-3 text-sm text-slate-700">
+                                        <Checkbox
+                                            checked={data.audio}
+                                            onChange={(event) =>
+                                                setData('audio', event.target.checked)
+                                            }
+                                            disabled={!data.submit_video}
+                                        />
+                                        <span>Request audio when the selected model supports it.</span>
+                                    </label>
+                                </div>
+
                                 <div className="flex flex-wrap items-center gap-3 pt-2">
-                                    <PrimaryButton type="submit" loading={loading}>
+                                    <PrimaryButton type="submit" loading={processing}>
                                         Generate
                                     </PrimaryButton>
-                                    <SecondaryButton
-                                        onClick={() => {
-                                            setResult(null);
-                                            setForm({
-                                                video_type: 'Marketing Video',
-                                                topic: '',
-                                                keywords: '',
-                                                target_audience: '',
-                                                tone: 'Persuasive',
-                                                duration: '30 seconds',
-                                            });
-                                        }}
-                                    >
+                                    <SecondaryButton onClick={resetForm}>
                                         Reset
                                     </SecondaryButton>
                                 </div>
@@ -237,10 +290,10 @@ export default function Create() {
                                     Draft Settings
                                 </p>
                                 <h3 className="mt-2 text-xl font-semibold text-slate-950">
-                                    {form.video_type}
+                                    {data.video_type}
                                 </h3>
                                 <p className="mt-3 text-sm leading-6 text-slate-600">
-                                    Tone: {form.tone} | Duration: {form.duration}
+                                    Tone: {data.tone} | Duration: {data.duration} seconds
                                 </p>
                             </div>
                             <div className="space-y-4 p-6 text-sm leading-6 text-slate-600">
@@ -248,61 +301,32 @@ export default function Create() {
                                     <span className="font-semibold text-slate-900">
                                         Topic:
                                     </span>{' '}
-                                    {form.topic || 'Waiting for your idea...'}
+                                    {data.topic || 'Waiting for your idea...'}
                                 </p>
                                 <p>
                                     <span className="font-semibold text-slate-900">
                                         Keywords:
                                     </span>{' '}
-                                    {form.keywords || 'No keywords yet'}
+                                    {data.keywords || 'No keywords yet'}
                                 </p>
                                 <p>
                                     <span className="font-semibold text-slate-900">
                                         Audience:
                                     </span>{' '}
-                                    {form.target_audience ||
+                                    {data.target_audience ||
                                         'No audience selected yet'}
+                                </p>
+                                <p>
+                                    <span className="font-semibold text-slate-900">
+                                        Provider:
+                                    </span>{' '}
+                                    {data.submit_video
+                                        ? `Magic Hour ${data.model} / ${data.resolution} / ${data.aspect_ratio}`
+                                        : 'Script and storyboard only'}
                                 </p>
                             </div>
                         </Card>
                     </div>
-
-                    {result && (
-                        <section className="space-y-6">
-                            <PageHeader
-                                title="Generated Preview"
-                                description={result.summary}
-                            />
-
-                            <VideoPreview
-                                title={result.title}
-                                scenes={result.scenes}
-                            />
-
-                            <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
-                                <Card className="p-6">
-                                    <p className="text-sm font-semibold uppercase tracking-wide text-cyan-700">
-                                        Script
-                                    </p>
-                                    <h3 className="mt-2 text-xl font-semibold text-slate-950">
-                                        {result.title}
-                                    </h3>
-                                    <p className="mt-4 text-sm leading-7 text-slate-600">
-                                        {result.script}
-                                    </p>
-                                    <div className="mt-6 rounded-2xl bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
-                                        {result.cta}
-                                    </div>
-                                </Card>
-
-                                <div className="grid gap-4">
-                                    {result.scenes.map((scene) => (
-                                        <SceneCard key={scene.scene_number} {...scene} />
-                                    ))}
-                                </div>
-                            </div>
-                        </section>
-                    )}
                 </div>
             </div>
         </AuthenticatedLayout>

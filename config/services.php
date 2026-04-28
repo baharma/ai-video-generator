@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'magic_hour' => [
+        'key' => env('MAGIC_HOUR_API_KEY'),
+        'url' => env('MAGIC_HOUR_API_URL', 'https://api.magichour.ai/v1'),
+    ],
+
 ];

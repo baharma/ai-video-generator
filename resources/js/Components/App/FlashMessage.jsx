@@ -3,6 +3,7 @@ export default function FlashMessage({ children, type = 'info' }) {
         info: 'border-cyan-200 bg-cyan-50 text-cyan-800',
         success: 'border-emerald-200 bg-emerald-50 text-emerald-800',
         warning: 'border-amber-200 bg-amber-50 text-amber-900',
+        error: 'border-rose-200 bg-rose-50 text-rose-800',
     };
 
     return (

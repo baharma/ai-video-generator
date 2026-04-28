@@ -2,45 +2,37 @@ import EmptyState from '@/Components/App/EmptyState';
 import GenerationTable from '@/Components/App/GenerationTable';
 import PageHeader from '@/Components/App/PageHeader';
 import PrimaryButton from '@/Components/App/PrimaryButton';
+import SecondaryButton from '@/Components/App/SecondaryButton';
 import SelectInput from '@/Components/App/SelectInput';
 import TextInput from '@/Components/App/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
 
-const generations = [
-    {
-        id: 1,
-        title: 'Boost Your Brand with Smart Video Content',
-        topic: 'AI marketing campaign',
-        video_type: 'Marketing Video',
-        tone: 'Persuasive',
-        duration: '30 seconds',
-        created_at: '2026-04-28',
-    },
-    {
-        id: 2,
-        title: 'Learn Laravel in 60 Seconds',
-        topic: 'Laravel beginner tutorial',
-        video_type: 'Educational Clip',
-        tone: 'Friendly',
-        duration: '60 seconds',
-        created_at: '2026-04-27',
-    },
-    {
-        id: 3,
-        title: 'Promote Your Property Listing',
-        topic: 'Real estate social media reel',
-        video_type: 'Social Media Reel',
-        tone: 'Professional',
-        duration: '30 seconds',
-        created_at: '2026-04-26',
-    },
-];
+export default function Index({
+    generations,
+    filters = {},
+    videoTypes = [],
+}) {
+    const [search, setSearch] = useState(filters.search || '');
+    const [videoType, setVideoType] = useState(filters.video_type || '');
+    const rows = generations?.data || [];
 
-export default function Index() {
-    const [search, setSearch] = useState('');
-    const [filter, setFilter] = useState('All Types');
+    const submitFilters = (event) => {
+        event.preventDefault();
+
+        router.get(
+            route('generations.index'),
+            {
+                search,
+                video_type: videoType,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
 
     return (
         <AuthenticatedLayout
@@ -56,7 +48,7 @@ export default function Index() {
                 <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
                     <PageHeader
                         title="Generation History"
-                        description="Browse previously generated video concepts. Search, filters, and actions are visual only for now."
+                        description="Browse scripts, storyboards, Magic Hour video jobs, and saved outputs."
                         action={
                             <PrimaryButton
                                 as="a"
@@ -67,31 +59,61 @@ export default function Index() {
                         }
                     />
 
-                    <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[1fr_240px]">
+                    <form
+                        onSubmit={submitFilters}
+                        className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[1fr_240px_auto]"
+                    >
                         <TextInput
                             value={search}
                             onChange={(event) => setSearch(event.target.value)}
-                            placeholder="Search generation titles or topics"
+                            placeholder="Search titles, topics, or keywords"
                         />
                         <SelectInput
-                            value={filter}
-                            onChange={(event) => setFilter(event.target.value)}
+                            value={videoType}
+                            onChange={(event) => setVideoType(event.target.value)}
                         >
-                            <option>All Types</option>
-                            <option>Marketing Video</option>
-                            <option>Educational Clip</option>
-                            <option>Social Media Reel</option>
-                            <option>Product Demo</option>
-                            <option>Explainer Video</option>
+                            <option value="">All Types</option>
+                            {videoTypes.map((type) => (
+                                <option key={type} value={type}>
+                                    {type}
+                                </option>
+                            ))}
                         </SelectInput>
-                    </div>
+                        <SecondaryButton type="submit">Filter</SecondaryButton>
+                    </form>
 
-                    {generations.length > 0 ? (
-                        <GenerationTable generations={generations} />
+                    {rows.length > 0 ? (
+                        <div className="space-y-4">
+                            <GenerationTable generations={rows} />
+
+                            {generations.links?.length > 3 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {generations.links.map((link) => (
+                                        <SecondaryButton
+                                            key={`${link.label}-${link.url}`}
+                                            as="a"
+                                            href={link.url || '#'}
+                                            disabled={!link.url}
+                                            className={
+                                                link.active
+                                                    ? 'border-cyan-500 bg-cyan-50 text-cyan-800'
+                                                    : ''
+                                            }
+                                        >
+                                            <span
+                                                dangerouslySetInnerHTML={{
+                                                    __html: link.label,
+                                                }}
+                                            />
+                                        </SecondaryButton>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     ) : (
                         <EmptyState
                             title="No generations yet"
-                            description="Create your first AI video script to see it listed here."
+                            description="Create your first AI video project to see it listed here."
                             action={
                                 <PrimaryButton
                                     as="a"

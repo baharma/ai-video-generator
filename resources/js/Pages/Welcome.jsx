@@ -264,15 +264,14 @@ export default function Welcome({ auth }) {
                     <div className="rounded-2xl bg-slate-950 p-6 text-white shadow-xl shadow-slate-950/10 sm:p-8 lg:flex lg:items-center lg:justify-between">
                         <div>
                             <p className="text-sm font-semibold uppercase tracking-wide text-cyan-300">
-                                Try the preview
+                                Start generating
                             </p>
                             <h2 className="mt-3 text-2xl font-semibold">
-                                Start with dummy data and explore the UI.
+                                Create a real saved generation history.
                             </h2>
                             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-                                The current version is frontend-only, so you can
-                                review the product flow before adding real AI
-                                generation and saved history.
+                                Save the prompt, script, storyboard, Magic Hour
+                                project status, API usage logs, and output URL.
                             </p>
                         </div>
 

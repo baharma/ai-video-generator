@@ -14,12 +14,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $myKeyApi = env('MAGIC_HOUR_API_KEY');
-        $apiUrl = env('MAGIC_HOUR_API_URL');
-
-        $this->app->singleton(VideoApiServiceApi::class, function ($app) use ($myKeyApi, $apiUrl) {
-            $service = new VideoApiServiceApiImplement($myKeyApi, $apiUrl);
-            return $service;
+        $this->app->singleton(VideoApiServiceApi::class, function () {
+            return new VideoApiServiceApiImplement(
+                (string) config('services.magic_hour.key'),
+                (string) config('services.magic_hour.url'),
+            );
         });
     }
 

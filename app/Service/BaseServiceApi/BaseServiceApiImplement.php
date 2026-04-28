@@ -4,12 +4,14 @@ namespace App\Service\BaseServiceApi;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class BaseServiceApiImplement implements BaseServiceApi
 {
     protected string $baseUrl = '';
     protected string $keyApi = '';
     protected array $defaultHeaders = [
+        'Accept' => 'application/json',
         'Content-Type' => 'application/json',
     ];
 
@@ -17,6 +19,10 @@ class BaseServiceApiImplement implements BaseServiceApi
     {
         $this->keyApi = $keyApi;
         $this->baseUrl = rtrim($baseUrl, '/');
+
+        if ($this->keyApi !== '') {
+            $this->defaultHeaders['Authorization'] = "Bearer {$this->keyApi}";
+        }
     }
 
     public function setBaseUrl(string $baseUrl): void
@@ -37,23 +43,79 @@ class BaseServiceApiImplement implements BaseServiceApi
 
     protected function request(string $method, string $endpoint, array $data = [], array $headers = [])
     {
-        if (!$this->baseUrl) {
-            throw new \Exception('Base URL is not set.');
+        $result = $this->requestWithMeta($method, $endpoint, $data, $headers);
+
+        if (!$result['successful']) {
+            throw new \Exception($result['error_message'] ?? 'HTTP request failed.');
         }
 
-        $fullUrl = $this->baseUrl . $endpoint;
-        Log::info("Sending {$method} request to URL: {$fullUrl} with data: " . json_encode($data) . " and headers: " . json_encode($headers));
+        return $result['data'];
+    }
+
+    protected function requestWithMeta(string $method, string $endpoint, array $data = [], array $headers = []): array
+    {
+        if (!$this->baseUrl) {
+            return [
+                'successful' => false,
+                'status' => null,
+                'data' => null,
+                'error_message' => 'Base URL is not set.',
+                'duration_ms' => 0,
+                'endpoint' => $endpoint,
+                'http_method' => strtoupper($method),
+                'request_payload' => $data,
+            ];
+        }
+
+        $fullUrl = $this->baseUrl . '/' . ltrim($endpoint, '/');
+        $startedAt = microtime(true);
+
+        Log::info("Sending {$method} request to URL: {$fullUrl}");
 
         try {
-            $response = Http::withHeaders(array_merge($this->defaultHeaders, $headers))
+            $response = Http::timeout(120)
+                ->acceptJson()
+                ->asJson()
+                ->withHeaders(array_merge($this->defaultHeaders, $headers))
                 ->{$method}($fullUrl, $data);
 
-            Log::info("Received response: " . json_encode($response->json()));
+            $body = $response->json();
+            $durationMs = (int) round((microtime(true) - $startedAt) * 1000);
+            $errorMessage = null;
 
-            return $response->json();
-        } catch (\Exception $e) {
+            if (!$response->successful()) {
+                $errorMessage = is_array($body)
+                    ? ($body['message'] ?? $body['error'] ?? json_encode($body))
+                    : $response->body();
+            }
+
+            Log::info("Received {$method} response from URL: {$fullUrl} with status {$response->status()}");
+
+            return [
+                'successful' => $response->successful(),
+                'status' => $response->status(),
+                'data' => $body,
+                'error_message' => $errorMessage,
+                'duration_ms' => $durationMs,
+                'endpoint' => $endpoint,
+                'http_method' => strtoupper($method),
+                'request_payload' => $data,
+            ];
+        } catch (Throwable $e) {
+            $durationMs = (int) round((microtime(true) - $startedAt) * 1000);
+
             Log::error("HTTP request error: " . $e->getMessage());
-            throw $e;
+
+            return [
+                'successful' => false,
+                'status' => null,
+                'data' => null,
+                'error_message' => $e->getMessage(),
+                'duration_ms' => $durationMs,
+                'endpoint' => $endpoint,
+                'http_method' => strtoupper($method),
+                'request_payload' => $data,
+            ];
         }
     }
 }

@@ -1,8 +1,29 @@
+import { router } from '@inertiajs/react';
 import DangerButton from './DangerButton';
 import MetadataBadge from './MetadataBadge';
 import SecondaryButton from './SecondaryButton';
 
 export default function GenerationTable({ generations = [] }) {
+    const destroyGeneration = (generation) => {
+        if (!window.confirm(`Delete "${generation.title}"?`)) {
+            return;
+        }
+
+        router.delete(route('generations.destroy', generation.id), {
+            preserveScroll: true,
+        });
+    };
+
+    const statusTone = (status) => {
+        if (status === 'completed') return 'emerald';
+        if (status === 'failed') return 'amber';
+        if (status === 'video_processing' || status === 'video_submitted') {
+            return 'violet';
+        }
+
+        return 'default';
+    };
+
     return (
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="hidden overflow-x-auto lg:block">
@@ -20,6 +41,9 @@ export default function GenerationTable({ generations = [] }) {
                             </th>
                             <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                                 Duration
+                            </th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Status
                             </th>
                             <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                                 Created
@@ -52,6 +76,11 @@ export default function GenerationTable({ generations = [] }) {
                                     {generation.duration}
                                 </td>
                                 <td className="px-6 py-5 text-sm text-slate-600">
+                                    <MetadataBadge tone={statusTone(generation.status)}>
+                                        {generation.status}
+                                    </MetadataBadge>
+                                </td>
+                                <td className="px-6 py-5 text-sm text-slate-600">
                                     {generation.created_at}
                                 </td>
                                 <td className="px-6 py-5">
@@ -66,10 +95,22 @@ export default function GenerationTable({ generations = [] }) {
                                         >
                                             View
                                         </SecondaryButton>
-                                        <SecondaryButton className="px-3 py-2">
+                                        <SecondaryButton
+                                            as="a"
+                                            href={route(
+                                                'generations.export',
+                                                generation.id,
+                                            )}
+                                            className="px-3 py-2"
+                                        >
                                             Export
                                         </SecondaryButton>
-                                        <DangerButton className="px-3 py-2">
+                                        <DangerButton
+                                            onClick={() =>
+                                                destroyGeneration(generation)
+                                            }
+                                            className="px-3 py-2"
+                                        >
                                             Delete
                                         </DangerButton>
                                     </div>
@@ -88,6 +129,9 @@ export default function GenerationTable({ generations = [] }) {
                                 {generation.video_type}
                             </MetadataBadge>
                             <MetadataBadge>{generation.duration}</MetadataBadge>
+                            <MetadataBadge tone={statusTone(generation.status)}>
+                                {generation.status}
+                            </MetadataBadge>
                         </div>
                         <h3 className="mt-3 text-base font-semibold text-slate-950">
                             {generation.title}
@@ -121,10 +165,17 @@ export default function GenerationTable({ generations = [] }) {
                             >
                                 View
                             </SecondaryButton>
-                            <SecondaryButton className="px-3 py-2">
+                            <SecondaryButton
+                                as="a"
+                                href={route('generations.export', generation.id)}
+                                className="px-3 py-2"
+                            >
                                 Export
                             </SecondaryButton>
-                            <DangerButton className="px-3 py-2">
+                            <DangerButton
+                                onClick={() => destroyGeneration(generation)}
+                                className="px-3 py-2"
+                            >
                                 Delete
                             </DangerButton>
                         </div>
