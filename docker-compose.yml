@@ -9,6 +9,10 @@ services:
       - .:/var/www/html
       - composer-cache:/tmp/composer-cache
     environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: "https://video-ai.baharma.my.id"
+      ASSET_URL: "https://video-ai.baharma.my.id"
       VITE_APP_NAME: "${APP_NAME:-AI Video Generator}"
       VITE_APP_URL: "https://video-ai.baharma.my.id"
       COMPOSER_CACHE_DIR: /tmp/composer-cache
